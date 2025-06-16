@@ -1,6 +1,6 @@
 ﻿using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,15 +17,52 @@ namespace Infra
         public virtual DbSet<ShortUrl> ShortUrls { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<ShortUrl>()
-                .HasIndex(s => s.ShortenedUrl)
-                .IsUnique();
-
             base.OnModelCreating(modelBuilder);
+
+            // Configure ShortUrl entity
+            modelBuilder.Entity<ShortUrl>(entity =>
+            {
+                entity.ToTable("ShortUrls");
+
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Id)
+                    .ValueGeneratedOnAdd();
+
+                entity.Property(e => e.OriginalUrl)
+                    .IsRequired()
+                    .HasMaxLength(4000);
+
+                entity.Property(e => e.ShortenedUrl)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.Property(e => e.Team)
+                    .IsRequired();
+
+                entity.Property(e => e.Level)
+                    .IsRequired();
+
+                entity.Property(e => e.CreateDate)
+                    .IsRequired()
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                entity.Property(e => e.UpdateDate)
+                    .IsRequired()
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                entity.Property(e => e.IsDeleted)
+                    .IsRequired()
+                    .HasDefaultValue(false);
+                // Create unique index on ShortenedUrl
+                entity.HasIndex(e => e.ShortenedUrl)
+                    .IsUnique()
+                    .HasDatabaseName("IX_ShortUrls_ShortenedUrl");
+            });
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer("Server=(local);uid=sa;pwd=12345;Database=ShortLinkDB;TrustServerCertificate=true;");
+            optionsBuilder.UseNpgsql("Host=localhost;Database=shorturl_db;Username=postgres;Password=09022001;Port=5432");
         }
     }
 }

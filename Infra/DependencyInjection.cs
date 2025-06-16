@@ -20,7 +20,7 @@ namespace Infra
         {
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddAutoMapper (AppDomain.CurrentDomain.GetAssemblies());
-            services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(config.GetConnectionString("ShortLink_DB")));
+            services.AddDbContext<AppDbContext>(opt => opt.UseNpgsql(config.GetConnectionString("ShortLink_DB")));
 
             services.AddScoped<IShortUrlRepo, ShortUrlRepo>();
             services.AddScoped<IShortUrlService, ShortUrlService>();
