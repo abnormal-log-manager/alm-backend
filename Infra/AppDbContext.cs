@@ -18,6 +18,17 @@ namespace Infra
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            var dateTimeConverter = new DateTimeUtcConverter();
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                foreach (var property in entityType.GetProperties())
+                {
+                    if (property.ClrType == typeof(DateTime))
+                    {
+                        property.SetValueConverter(dateTimeConverter);
+                    }
+                }
+            }
 
             // Configure ShortUrl entity
             modelBuilder.Entity<ShortUrl>(entity =>
@@ -60,9 +71,6 @@ namespace Infra
                     .HasDatabaseName("IX_ShortUrls_ShortenedUrl");
             });
         }
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseNpgsql("Host=localhost;Database=shorturl_db;Username=postgres;Password=09022001;Port=5432");
-        }
+        
     }
 }

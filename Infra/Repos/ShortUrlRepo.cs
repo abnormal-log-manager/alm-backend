@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -73,6 +74,29 @@ namespace Infra.Repos
             var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 
             return (items, totalCount);
+        }
+        public async Task<Dictionary<string, Dictionary<string, int>>> GetStatsPerTeamAsync(DateTime? from = null)
+        {
+            var query = _context.ShortUrls.Where(x => !x.IsDeleted);
+
+            if (from.HasValue)
+                query = query.Where(x => x.CreateDate >= from.Value);
+
+            var result = await query
+            .GroupBy(x => new { x.Team, x.Level })
+            .Select(g => new
+            {
+                g.Key.Team,
+                g.Key.Level,
+                Count = g.Count()
+            }).ToListAsync();
+
+            return result
+            .GroupBy(x => x.Team)
+            .ToDictionary(
+                g => g.Key,
+                g => g.ToDictionary(x => x.Level, x => x.Count)
+            );
         }
     }
 }

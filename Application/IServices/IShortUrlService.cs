@@ -18,5 +18,6 @@ namespace Application.IServices
         Task SoftDeleteAsync(int id);
         Task<(IList<ShortUrlVM> Items, int TotalCount)> SearchAsync(
     int page, int pageSize, string? team, string? level, DateTime? createdDate, string? shortCode, string? sortBy, bool descending);
+        Task<Dictionary<string, Dictionary<string, int>>> GetTeamStats(DateTime? from = null);
     }
 }

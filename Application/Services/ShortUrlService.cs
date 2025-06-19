@@ -87,5 +87,9 @@ namespace Application.Services
             var (items, totalCount) = await _repo.GetFilteredAsync(page, pageSize, team, level, createdDate, shortCode, sortBy, descending);
             return (_mapper.Map<IList<ShortUrlVM>>(items), totalCount);
         }
+        public async Task<Dictionary<string, Dictionary<string, int>>> GetTeamStats(DateTime? from = null)
+        {
+            return await _repo.GetStatsPerTeamAsync(from);
+        }
     }
 }
