@@ -62,8 +62,8 @@ namespace ShortLinkAPI.Controllers
             await _service.SoftDeleteAsync(id);
             return Ok("Url soft deleted");
         }
-        [HttpGet("search")]
-        public async Task<IActionResult> Search(
+        [HttpGet("filter")]
+        public async Task<IActionResult> Filter(
             int page = 1,
             int pageSize = 10,
             string? team = null,
@@ -73,7 +73,7 @@ namespace ShortLinkAPI.Controllers
             string? sortBy = null,
             bool descending = false)
         {
-            var (items, totalCount) = await _service.SearchAsync(page, pageSize, team, level, createdDate, shortCode, sortBy, descending);
+            var (items, totalCount) = await _service.FilterAsync(page, pageSize, team, level, createdDate, sortBy, descending);
             return Ok(new
             {
                 data = items,
@@ -82,6 +82,16 @@ namespace ShortLinkAPI.Controllers
                 totalItems = totalCount,
                 totalPages = (int)Math.Ceiling((double)totalCount / pageSize)
             });
+        }
+        [HttpGet("search")]
+        public async Task<IActionResult> Search([FromQuery] string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+                return BadRequest("Query is required");
+            var result = await _service.SearchAsync(query);
+            if (result == null)
+                return NotFound("No matching URL found");
+            return Ok(result);
         }
     }
 }

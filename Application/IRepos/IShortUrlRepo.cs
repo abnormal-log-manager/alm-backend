@@ -14,7 +14,8 @@ namespace Application.IRepos
         Task<ShortUrl?> GetByOriginalUrlAsync(String originalUrl);
         Task<(IList<ShortUrl> Items, int TotalCount)> GetPaginatedAsync(int page, int pageSize);
         Task<(IList<ShortUrl> Items, int TotalCount)> GetFilteredAsync(
-    int page, int pageSize, string? team, string? level, DateTime? createdDate, string? shortCode, string? sortBy, bool descending);
+    int page, int pageSize, string? team, string? level, DateTime? createdDate, string? sortBy, bool descending);
         Task<Dictionary<string, Dictionary<string, int>>> GetStatsPerTeamAsync(DateTime? from = null);
+        Task<ShortUrl?> SearchAsync(String query);
     }
 }

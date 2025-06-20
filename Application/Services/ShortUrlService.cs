@@ -81,15 +81,20 @@ namespace Application.Services
         {
             return Guid.NewGuid().ToString("N")[..8];
         }
-        public async Task<(IList<ShortUrlVM> Items, int TotalCount)> SearchAsync(
-    int page, int pageSize, string? team, string? level, DateTime? createdDate, string? shortCode, string? sortBy, bool descending)
+        public async Task<(IList<ShortUrlVM> Items, int TotalCount)> FilterAsync(
+    int page, int pageSize, string? team, string? level, DateTime? createdDate, string? sortBy, bool descending)
         {
-            var (items, totalCount) = await _repo.GetFilteredAsync(page, pageSize, team, level, createdDate, shortCode, sortBy, descending);
+            var (items, totalCount) = await _repo.GetFilteredAsync(page, pageSize, team, level, createdDate, sortBy, descending);
             return (_mapper.Map<IList<ShortUrlVM>>(items), totalCount);
         }
         public async Task<Dictionary<string, Dictionary<string, int>>> GetTeamStats(DateTime? from = null)
         {
             return await _repo.GetStatsPerTeamAsync(from);
+        }
+        public async Task<ShortUrlVM?> SearchAsync(string query)
+        {
+            var result = await _repo.SearchAsync(query);
+            return result == null ? null : _mapper.Map<ShortUrlVM>(result);
         }
     }
 }

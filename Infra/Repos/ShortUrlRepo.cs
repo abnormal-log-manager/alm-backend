@@ -45,7 +45,7 @@ namespace Infra.Repos
             return (items, totalCount);
         }
         public async Task<(IList<ShortUrl> Items, int TotalCount)> GetFilteredAsync(
-    int page, int pageSize, string? team, string? level, DateTime? createdDate, string? shortCode, string? sortBy, bool descending)
+    int page, int pageSize, string? team, string? level, DateTime? createdDate, string? sortBy, bool descending)
         {
             var query = _context.ShortUrls.AsQueryable();
 
@@ -57,9 +57,6 @@ namespace Infra.Repos
 
             if (createdDate.HasValue)
                 query = query.Where(x => x.CreateDate.Date == createdDate.Value.Date);
-
-            if (!string.IsNullOrEmpty(shortCode))
-                query = query.Where(x => x.ShortenedUrl.EndsWith("/" + shortCode));
 
             query = sortBy switch
             {
@@ -97,6 +94,22 @@ namespace Infra.Repos
                 g => g.Key,
                 g => g.ToDictionary(x => x.Level, x => x.Count)
             );
+        }
+        public async Task<ShortUrl?> SearchAsync(String query)
+        {
+            string? shortCode = null;
+            if (Uri.TryCreate(query, UriKind.Absolute, out var uri))
+            {
+                shortCode = uri.Segments.LastOrDefault()?.TrimEnd('/');
+            } 
+            else
+            {
+                shortCode = query;
+            }
+            return await _context.ShortUrls.FirstOrDefaultAsync(x =>
+            x.OriginalUrl == query ||
+            x.ShortenedUrl == query ||
+            x.ShortenedUrl.EndsWith("/" + shortCode));
         }
     }
 }
