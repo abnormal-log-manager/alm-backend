@@ -23,6 +23,15 @@ namespace ShortLinkAPI.Controllers
             var result = await _service.ShortenUrlAsync(vm);
             return Ok(result);
         }
+        [HttpPost("bulk")]
+        public async Task<IActionResult> ShortenUrlBulk([FromBody] List<ShortUrlAddVM> vms)
+        {
+            if (!ModelState.IsValid || vms == null || vms.Count == 0)
+                return BadRequest("Invalid or empty input.");
+
+            var results = await _service.ShortenUrlBulkAsync(vms);
+            return Ok(results);
+        }
         [HttpGet]
         public async Task<IActionResult> ReadAllUrl(int page = 1, int pageSize = 10)
         {
@@ -69,7 +78,6 @@ namespace ShortLinkAPI.Controllers
             string? team = null,
             string? level = null,
             DateTime? createdDate = null,
-            string? shortCode = null,
             string? sortBy = null,
             bool descending = false)
         {

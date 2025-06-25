@@ -42,7 +42,6 @@ namespace Application.Services
             _unit.ShortUrlRepo.SoftDelete(record);
             await _unit.SaveChangesAsync();
         }
-
         public async Task<string?> GetOriginalUrlAsync(string shortCode)
         {
             var shortUrl = await _repo.GetByShortCodeAsync(shortCode);
@@ -76,6 +75,27 @@ namespace Application.Services
             await _repo.CreateAsync(entity);
             await _unit.SaveChangesAsync();
             return _mapper.Map<ShortUrlVM>(entity);
+        }
+        public async Task<IList<ShortUrlVM>> ShortenUrlBulkAsync(IEnumerable<ShortUrlAddVM> vms)
+        {
+            var results = new List<ShortUrlVM>();
+
+            foreach (var vm in vms)
+            {
+                var existing = await _repo.GetByOriginalUrlAsync(vm.OriginalUrl);
+                if (existing != null)
+                {
+                    results.Add(_mapper.Map<ShortUrlVM>(existing));
+                    continue;
+                }
+                var entity = _mapper.Map<ShortUrl>(vm);
+                var shortCode = GeneratedShortCode();
+                entity.ShortenedUrl = $"{_baseDomain.TrimEnd('/')}/r/{shortCode}";
+                await _repo.CreateAsync(entity);
+                results.Add(_mapper.Map<ShortUrlVM>(entity));
+            }
+            await _unit.SaveChangesAsync();
+            return results;
         }
         private String GeneratedShortCode()
         {

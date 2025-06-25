@@ -11,6 +11,7 @@ namespace Application.IServices
     public interface IShortUrlService
     {
         Task<ShortUrlVM> ShortenUrlAsync(ShortUrlAddVM vm);
+        Task<IList<ShortUrlVM>> ShortenUrlBulkAsync(IEnumerable<ShortUrlAddVM> vms);
         Task<string?> GetOriginalUrlAsync(string shortCode);
         Task<(IList<ShortUrlVM> Items, int TotalCount)> ReadAllAsync(int page = 1, int pageSize = 10);
         Task<ShortUrlVM> ReadAsync(int id);
