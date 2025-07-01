@@ -1,4 +1,5 @@
-﻿using Domain;
+﻿using Application.Extensions;
+using Domain;
 using Domain.Enums;
 using System;
 using System.Collections.Generic;
@@ -14,5 +15,7 @@ namespace Application.ViewModels.ShortUrl
         public required string ShortenedUrl { get; set; }
         public required string Team { get; set; }
         public required string Level { get; set; }
+
+        public DateTime CreateDateIct => TimeZoneHelper.ConvertToIct(CreateDate);
     }
 }
