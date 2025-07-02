@@ -42,7 +42,7 @@ namespace Infra
 
                 entity.Property(e => e.OriginalUrl)
                     .IsRequired()
-                    .HasMaxLength(4000);
+                    .HasColumnType("text");
 
                 entity.Property(e => e.ShortenedUrl)
                     .IsRequired()
@@ -71,6 +71,9 @@ namespace Infra
                     .HasDatabaseName("IX_ShortUrls_ShortenedUrl");
             });
         }
-        
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseNpgsql("Host=localhost;Database=shorturl_db;Username=postgres;Password=09022001;port=15432");
+        }
     }
 }

@@ -10,7 +10,7 @@ namespace Domain.Entities
 {
     public class ShortUrl : BaseEntity
     {
-        [MaxLength(4000)]
+        
         public required string OriginalUrl { get; set; }
         [MaxLength(100)]
         public required string ShortenedUrl { get; set; }
