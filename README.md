@@ -50,7 +50,7 @@ POST /api/ShortUrl
 ### Endpoint:
 
 ```csharp
-GET /api/r/{shortCode
+GET /api/r/{shortCode}
 ```
 
 ### Ví dụ:
