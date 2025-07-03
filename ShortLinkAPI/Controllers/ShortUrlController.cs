@@ -101,5 +101,15 @@ namespace ShortLinkAPI.Controllers
                 return NotFound("No matching URL found");
             return Ok(result);
         }
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateShortUrl(int id, [FromBody] ShortUrlUpdateVM vm)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            var result = await _service.UpdateAsync(id, vm.Title, vm.Team, vm.Level);
+            if (result == null)
+                return NotFound("Hort URL not found or deleted.");
+            return Ok(result);
+        }
     }
 }

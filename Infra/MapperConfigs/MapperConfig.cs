@@ -14,7 +14,8 @@ namespace Infra.MapperConfigs
         public MapperConfig() { MappingAccount(); }
         public void MappingAccount()
         {
-            CreateMap<ShortUrl, ShortUrlAddVM>().ReverseMap();
+            CreateMap<ShortUrl, ShortUrlAddVM>().ReverseMap()
+            .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Title));
             CreateMap<ShortUrl, ShortUrlVM>().ReverseMap();
         }
 

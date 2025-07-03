@@ -1,6 +1,7 @@
 ﻿using Application.IRepos;
 using Application.IServices;
 using Application.Settings;
+using Application.Extensions;
 using Application.ViewModels.ShortUrl;
 using AutoMapper;
 using Domain.Entities;
@@ -61,7 +62,34 @@ namespace Application.Services
             var result = _mapper.Map<ShortUrlVM>(item);
             return result;
         }
-
+        private async Task<string> GenerateTitleFromUrl(string url)
+        {
+            try
+            {
+                using var client = new HttpClient();
+                var html = await client.GetStringAsync(url);
+                var start = html.IndexOf("<title>", StringComparison.OrdinalIgnoreCase);
+                var end = html.IndexOf("<title>", StringComparison.OrdinalIgnoreCase);
+                if (start != -1 && end > start)
+                {
+                    return html.Substring(start + 7, end - (start + 7)).Trim();
+                }
+            }
+            catch
+            {
+                // fallback
+            }
+            //fallback: use domain or generic name
+            try
+            {
+                var uri = new Uri(url);
+                return uri.Host.Replace("www", "").Split('.').FirstOrDefault()?.CapitalizeFirst() ?? "Untitle Link";
+            }
+            catch
+            {
+                return "Untitled";
+            }
+        }
         public async Task<ShortUrlVM> ShortenUrlAsync(ShortUrlAddVM vm)
         {
             var existing = await _repo.GetByOriginalUrlAsync(vm.OriginalUrl);
@@ -70,6 +98,10 @@ namespace Application.Services
                 return _mapper.Map<ShortUrlVM>(existing);
             }
             var entity = _mapper.Map<ShortUrl>(vm);
+            if (string.IsNullOrWhiteSpace(entity.Title))
+            {
+                entity.Title = await GenerateTitleFromUrl(entity.OriginalUrl);
+            }
             var shortCode = GeneratedShortCode();
             entity.ShortenedUrl = $"{_baseDomain.TrimEnd('/')}/r/{shortCode}";
             await _repo.CreateAsync(entity);
@@ -89,6 +121,10 @@ namespace Application.Services
                     continue;
                 }
                 var entity = _mapper.Map<ShortUrl>(vm);
+                if (string.IsNullOrWhiteSpace(entity.Title))
+                {
+                    entity.Title = await GenerateTitleFromUrl(entity.OriginalUrl);
+                }
                 var shortCode = GeneratedShortCode();
                 entity.ShortenedUrl = $"{_baseDomain.TrimEnd('/')}/r/{shortCode}";
                 await _repo.CreateAsync(entity);
@@ -115,6 +151,18 @@ namespace Application.Services
         {
             var result = await _repo.SearchAsync(query);
             return result == null ? null : _mapper.Map<ShortUrlVM>(result);
+        }
+        public async Task<ShortUrlVM?> UpdateAsync(int id, string? title, string? team, string? level)
+        {
+            var entity = await _unit.ShortUrlRepo.ReadAsync(id);
+            if (entity == null || entity.IsDeleted)
+                return null;
+            entity.Title = title ?? entity.Title;
+            entity.Team = team ?? entity.Team;
+            entity.Level = level ?? entity.Level;
+            entity.UpdateDate = DateTime.Now;
+            await _unit.SaveChangesAsync();
+            return _mapper.Map<ShortUrlVM>(entity);
         }
     }
 }

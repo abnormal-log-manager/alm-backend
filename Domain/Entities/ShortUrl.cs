@@ -16,6 +16,7 @@ namespace Domain.Entities
         public required string ShortenedUrl { get; set; }
         public required string Team { get; set; }
         public required string Level { get; set; }
+        public string? Title { get; set; }
 
     }
 }

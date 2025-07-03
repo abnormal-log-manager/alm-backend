@@ -21,5 +21,6 @@ namespace Application.IServices
     int page, int pageSize, string? team, string? level, DateTime? createdDate, string? sortBy, bool descending);
         Task<Dictionary<string, Dictionary<string, int>>> GetTeamStats(DateTime? from = null);
         Task<ShortUrlVM?> SearchAsync(string query);
+        Task<ShortUrlVM?> UpdateAsync(int id, string? title, string? team, string? level);
     }
 }

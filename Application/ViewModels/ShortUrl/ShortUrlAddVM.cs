@@ -12,5 +12,6 @@ namespace Application.ViewModels.ShortUrl
         public required string OriginalUrl { get; set; }
         public required string Team { get; set; }
         public required string Level { get; set; }
+        public string? Title { get; set; }
     }
 }
