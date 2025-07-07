@@ -101,12 +101,12 @@ namespace Application.Services
             var existing = await _repo.GetByOriginalUrlAsync(vm.OriginalUrl);
             if (existing != null)
             {
-                return _mapper.Map<ShortUrlVM>(existing);
+                throw new InvalidOperationException("This URL already exists.");
             }
             var entity = _mapper.Map<ShortUrl>(vm);
             if (string.IsNullOrWhiteSpace(entity.Title))
             {
-                throw new InvalidOperationException("This URL already exists.");
+                entity.Title = await GenerateTitleFromUrl(entity.OriginalUrl);
             }
             var shortCode = GeneratedShortCode();
             entity.ShortenedUrl = $"{_baseDomain.TrimEnd('/')}/r/{shortCode}";
