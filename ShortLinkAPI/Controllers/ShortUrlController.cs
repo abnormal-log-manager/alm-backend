@@ -25,7 +25,7 @@ namespace ShortLinkAPI.Controllers
                 var result = await _service.ShortenUrlAsync(vm);
                 return Ok(result);
             }
-            catch
+            catch (InvalidOperationException ex)
             {
                 return Conflict(new { message = ex.Message });
             }
