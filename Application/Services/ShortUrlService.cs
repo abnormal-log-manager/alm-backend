@@ -106,7 +106,7 @@ namespace Application.Services
             var entity = _mapper.Map<ShortUrl>(vm);
             if (string.IsNullOrWhiteSpace(entity.Title))
             {
-                entity.Title = await GenerateTitleFromUrl(entity.OriginalUrl);
+                throw new InvalidOperationException("This URL already exists.");
             }
             var shortCode = GeneratedShortCode();
             entity.ShortenedUrl = $"{_baseDomain.TrimEnd('/')}/r/{shortCode}";
