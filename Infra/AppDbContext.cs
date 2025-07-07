@@ -69,6 +69,9 @@ namespace Infra
                 entity.HasIndex(e => e.ShortenedUrl)
                     .IsUnique()
                     .HasDatabaseName("IX_ShortUrls_ShortenedUrl");
+                    
+                entity.Property(e => e.Title)
+                    .HasColumnType("text");
             });
         }
         
