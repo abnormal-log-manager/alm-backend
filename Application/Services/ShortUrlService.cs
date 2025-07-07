@@ -67,29 +67,35 @@ namespace Application.Services
             try
             {
                 using var client = new HttpClient();
+                client.Timeout = TimeSpan.FromSeconds(3);
+
                 var html = await client.GetStringAsync(url);
                 var start = html.IndexOf("<title>", StringComparison.OrdinalIgnoreCase);
-                var end = html.IndexOf("<title>", StringComparison.OrdinalIgnoreCase);
-                if (start != -1 && end > start)
+                var end = html.IndexOf("</title>", StringComparison.OrdinalIgnoreCase);
+
+                if (start != -1 && end != -1 && end > start)
                 {
-                    return html.Substring(start + 7, end - (start + 7)).Trim();
+                    var title = html.Substring(start + 7, end - (start + 7)).Trim();
+                    if (!string.IsNullOrWhiteSpace(title))
+                        return title;
                 }
             }
             catch
             {
-                // fallback
+                // swallow and fallback
             }
-            //fallback: use domain or generic name
+
             try
             {
                 var uri = new Uri(url);
-                return uri.Host.Replace("www", "").Split('.').FirstOrDefault()?.CapitalizeFirst() ?? "Untitle Link";
+                return uri.Host.Replace("www.", "").Split('.').FirstOrDefault()?.CapitalizeFirst() ?? "Untitled Link";
             }
             catch
             {
-                return "Untitled";
+                return "Untitled Link";
             }
         }
+
         public async Task<ShortUrlVM> ShortenUrlAsync(ShortUrlAddVM vm)
         {
             var existing = await _repo.GetByOriginalUrlAsync(vm.OriginalUrl);

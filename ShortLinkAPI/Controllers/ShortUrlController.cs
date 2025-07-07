@@ -20,8 +20,15 @@ namespace ShortLinkAPI.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var result = await _service.ShortenUrlAsync(vm);
-            return Ok(result);
+            try
+            {
+                var result = await _service.ShortenUrlAsync(vm);
+                return Ok(result);
+            }
+            catch
+            {
+                return Conflict(new { message = ex.Message });
+            }
         }
         [HttpPost("bulk")]
         public async Task<IActionResult> ShortenUrlBulk([FromBody] List<ShortUrlAddVM> vms)
