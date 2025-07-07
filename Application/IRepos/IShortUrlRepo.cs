@@ -17,5 +17,7 @@ namespace Application.IRepos
     int page, int pageSize, string? team, string? level, DateTime? createdDate, string? sortBy, bool descending);
         Task<Dictionary<string, Dictionary<string, int>>> GetStatsPerTeamAsync(DateTime? from = null);
         Task<ShortUrl?> SearchAsync(String query);
+        Task<bool> ExistsByShortCodeAsync(string shortCode);
+
     }
 }

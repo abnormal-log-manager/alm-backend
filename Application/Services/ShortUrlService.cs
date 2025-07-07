@@ -106,9 +106,15 @@ namespace Application.Services
             var entity = _mapper.Map<ShortUrl>(vm);
             if (string.IsNullOrWhiteSpace(entity.Title))
             {
-                entity.Title = await GenerateTitleFromUrl(entity.OriginalUrl);
+                var generatedTitle = await GenerateTitleFromUrl(entity.OriginalUrl);
+                entity.Title = string.IsNullOrWhiteSpace(generatedTitle) ? "Untitled" : generatedTitle;
             }
-            var shortCode = GeneratedShortCode();
+            string shortCode;
+            do
+            {
+                shortCode = GeneratedShortCode();
+            }
+            while (await _repo.ExistsByShortCodeAsync(shortCode));
             entity.ShortenedUrl = $"{_baseDomain.TrimEnd('/')}/r/{shortCode}";
             await _repo.CreateAsync(entity);
             await _unit.SaveChangesAsync();

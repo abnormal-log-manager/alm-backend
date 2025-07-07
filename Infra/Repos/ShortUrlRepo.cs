@@ -111,5 +111,11 @@ namespace Infra.Repos
             x.ShortenedUrl == query ||
             x.ShortenedUrl.EndsWith("/" + shortCode));
         }
+        public async Task<bool> ExistsByShortCodeAsync(string shortCode)
+        {
+            return await _context.ShortUrls
+                .AnyAsync(s => s.ShortenedUrl.EndsWith($"/r/{shortCode}") && !s.IsDeleted);
+
+        }
     }
 }
