@@ -66,16 +66,16 @@ namespace Application.Services
         {
             try
             {
-                using var client = new HttpClient();
+                using var client = new HttpClient(); // tạo HttpClient để gửi request
                 client.Timeout = TimeSpan.FromSeconds(3);
 
-                var html = await client.GetStringAsync(url);
-                var start = html.IndexOf("<title>", StringComparison.OrdinalIgnoreCase);
-                var end = html.IndexOf("</title>", StringComparison.OrdinalIgnoreCase);
-
+                var html = await client.GetStringAsync(url); // lấy nội dung HTML của trang
+                var start = html.IndexOf("<title>", StringComparison.OrdinalIgnoreCase); // vị trí của <title>
+                var end = html.IndexOf("</title>", StringComparison.OrdinalIgnoreCase); // vị trí của </title>
+                // nếu tìm thấy <title> </title>
                 if (start != -1 && end != -1 && end > start)
                 {
-                    var title = html.Substring(start + 7, end - (start + 7)).Trim();
+                    var title = html.Substring(start + 7, end - (start + 7)).Trim(); // trích xuất phần giữa hai tags
                     if (!string.IsNullOrWhiteSpace(title))
                         return title;
                 }
@@ -84,13 +84,12 @@ namespace Application.Services
             {
                 // swallow and fallback
             }
-
-            try
+            try // tạo tiêu đề từ domain Url
             {
                 var uri = new Uri(url);
                 return uri.Host.Replace("www.", "").Split('.').FirstOrDefault()?.CapitalizeFirst() ?? "Untitled Link";
             }
-            catch
+            catch 
             {
                 return "Untitled Link";
             }
@@ -110,12 +109,12 @@ namespace Application.Services
                 entity.Title = string.IsNullOrWhiteSpace(generatedTitle) ? "Untitled" : generatedTitle;
             }
             string shortCode;
-            do
+            do // tạo mã rút gọn
             {
                 shortCode = GeneratedShortCode();
             }
-            while (await _repo.ExistsByShortCodeAsync(shortCode));
-            entity.ShortenedUrl = $"{_baseDomain.TrimEnd('/')}/r/{shortCode}";
+            while (await _repo.ExistsByShortCodeAsync(shortCode)); // đảm bảo shortCode không trùng
+            entity.ShortenedUrl = $"{_baseDomain.TrimEnd('/')}/r/{shortCode}"; // ghép thành shortUrl
             await _repo.CreateAsync(entity);
             await _unit.SaveChangesAsync();
             return _mapper.Map<ShortUrlVM>(entity);

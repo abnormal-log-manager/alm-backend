@@ -14,6 +14,7 @@ namespace ShortLinkAPI.Controllers
         {
             _service = service;
         }
+        // Lấy stat của team và level tương ứng
         [HttpGet("per-team")]
         public async Task<IActionResult> GetTeamStats([FromQuery] int? days = null)
         {

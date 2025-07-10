@@ -13,6 +13,7 @@ namespace Infra.Repos.Generics
 {
     public class GenericRepo<TModel> : IGenericRepo<TModel> where TModel : BaseEntity
     {
+        // tác vụ CRUD 
         protected DbSet<TModel> _dbSet;
         public GenericRepo(AppDbContext appDbContext)
         {

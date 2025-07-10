@@ -15,6 +15,7 @@ namespace ShortLinkAPI.Controllers
         {
             _service = service;
         }
+        // Nhập vào originalUrl để rút gọn
         [HttpPost]
         public async Task<IActionResult> ShortenUrl(ShortUrlAddVM vm)
         {
@@ -30,6 +31,7 @@ namespace ShortLinkAPI.Controllers
                 return Conflict(new { message = ex.Message });
             }
         }
+        // Dùng để nhập nhiều originalUrl khi test trên swagger, outdated
         [HttpPost("bulk")]
         public async Task<IActionResult> ShortenUrlBulk([FromBody] List<ShortUrlAddVM> vms)
         {
@@ -39,6 +41,7 @@ namespace ShortLinkAPI.Controllers
             var results = await _service.ShortenUrlBulkAsync(vms);
             return Ok(results);
         }
+        // Load tất cả URL lên dashboard và xử lí paging
         [HttpGet]
         public async Task<IActionResult> ReadAllUrl(int page = 1, int pageSize = 10)
         {
@@ -58,6 +61,7 @@ namespace ShortLinkAPI.Controllers
 
             return Ok(response);
         }
+        // Load một URL theo id
         [HttpGet("{id}")]
         public async Task<IActionResult> ReadUrl(int id)
         {
@@ -66,18 +70,21 @@ namespace ShortLinkAPI.Controllers
                 return NotFound();
             return Ok(url);
         }
+        // Xóa URL khỏi database
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUrl(int id)
         {
             await _service.DeleteAsync(id);
             return Ok("Url deleted");
         }
+        // Xóa "mềm" URL
         [HttpDelete("softdel")]
         public async Task<IActionResult> SoftDeleteUrl(int id)
         {
             await _service.SoftDeleteAsync(id);
             return Ok("Url soft deleted");
         }
+        // Filter theo parameter
         [HttpGet("filter")]
         public async Task<IActionResult> Filter(
             int page = 1,
@@ -98,6 +105,7 @@ namespace ShortLinkAPI.Controllers
                 totalPages = (int)Math.Ceiling((double)totalCount / pageSize)
             });
         }
+        // Tìm URL
         [HttpGet("search")]
         public async Task<IActionResult> Search([FromQuery] string query)
         {
@@ -108,6 +116,7 @@ namespace ShortLinkAPI.Controllers
                 return NotFound("No matching URL found");
             return Ok(result);
         }
+        // Update title, team, level
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateShortUrl(int id, [FromBody] ShortUrlUpdateVM vm)
         {

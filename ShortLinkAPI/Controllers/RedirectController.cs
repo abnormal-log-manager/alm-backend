@@ -13,6 +13,7 @@ namespace ShortLinkAPI.Controllers
         {
             _service = service;
         }
+        // Tìm short code tương ứng với Original URL trong db sau đó redirect
         [HttpGet("{shortCode}")]
         public async Task<IActionResult> RedirectUrl(string shortCode)
         {
