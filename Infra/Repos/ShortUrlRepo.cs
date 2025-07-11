@@ -41,14 +41,14 @@ namespace Infra.Repos
         public async Task<(IList<ShortUrl> Items, int TotalCount)> GetPaginatedAsync(int page, int pageSize)
         {
             var query = _context.ShortUrls
-                .Where(x => !x.IsDeleted) 
-                .OrderBy(x => x.CreateDate); 
+                .Where(x => !x.IsDeleted)
+                .OrderBy(x => x.CreateDate);
 
             var totalCount = await query.CountAsync(); // đếm tổng số bản ghi thỏa mản điều kiện trên
-            var items = await query 
+            var items = await query
                 .Skip((page - 1) * pageSize) // bỏ qua số lượng bản ghi tương ứng của các trang
                 .Take(pageSize) // lấy đúng số lượng bản ghi của trang hiện tại 
-                .ToListAsync(); 
+                .ToListAsync();
             return (items, totalCount); // trả ds bản ghi cho trang hiện tại và tổng số bản ghi
         }
         public async Task<(IList<ShortUrl> Items, int TotalCount)> GetFilteredAsync(
@@ -108,7 +108,7 @@ namespace Infra.Repos
             if (Uri.TryCreate(query, UriKind.Absolute, out var uri))
             {
                 shortCode = uri.Segments.LastOrDefault()?.TrimEnd('/');
-            } 
+            }
             else
             {
                 shortCode = query;
@@ -129,7 +129,7 @@ namespace Infra.Repos
             try
             {
                 using var client = new HttpClient();
-                client.Timeout = TimeSpan.FromSeconds(3);
+                client.Timeout = TimeSpan.FromSeconds(9);
                 var html = await client.GetStringAsync(url);
                 var start = html.IndexOf("<title>", StringComparison.OrdinalIgnoreCase);
                 var end = html.IndexOf("</title>", StringComparison.OrdinalIgnoreCase);
@@ -161,19 +161,20 @@ namespace Infra.Repos
 
             var headers = new[] { "OriginalUrl", "ShortenedUrl", "Title", "Team", "Level", "CreateDate", "UpdateDate", "IsDeleted" };
             for (int i = 0; i < headers.Length; i++)
-                sheet.Cells[1, i + 1].Value = headers[i];
+                sheet.Cells[1, i + 1].Value = headers[i]; // viết header ở row 1
 
-            for (int i = 0;i < all.Count; i++)
+            for (int i = 0; i < all.Count; i++)
             {
                 var url = all[i];
-                sheet.Cells[i + 1, 1].Value = url.OriginalUrl;
-                sheet.Cells[i + 1, 2].Value = url.ShortenedUrl;
-                sheet.Cells[i + 1, 3].Value = url.Title;
-                sheet.Cells[i + 1, 4].Value = url.Team;
-                sheet.Cells[i + 1, 5].Value = url.Level;
-                sheet.Cells[i + 1, 6].Value = url.CreateDate.ToString("yyyy-MM-dd HH:mm:ss");
-                sheet.Cells[i + 1, 7].Value = url.UpdateDate.ToString("yyyy-MM-dd HH:mm:ss");
-                sheet.Cells[i + 1, 8].Value = url.IsDeleted;
+                int row = i + 2; // bắt đầu viết data từ row 2
+                sheet.Cells[row, 1].Value = url.OriginalUrl;
+                sheet.Cells[row, 2].Value = url.ShortenedUrl;
+                sheet.Cells[row, 3].Value = url.Title;
+                sheet.Cells[row, 4].Value = url.Team;
+                sheet.Cells[row, 5].Value = url.Level;
+                sheet.Cells[row, 6].Value = url.CreateDate.ToString("yyyy-MM-dd HH:mm:ss");
+                sheet.Cells[row, 7].Value = url.UpdateDate.ToString("yyyy-MM-dd HH:mm:ss");
+                sheet.Cells[row, 8].Value = url.IsDeleted;
             }
             var stream = new MemoryStream();
             package.SaveAs(stream);
@@ -183,48 +184,97 @@ namespace Infra.Repos
 
         public async Task<int> ImportFromExcelAsync(Stream stream)
         {
-            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
-            using var package = new ExcelPackage();
-            var sheet = package.Workbook.Worksheets.FirstOrDefault();
-            if (sheet == null) return 0;
-
-            int rowCount = sheet.Dimension.Rows;
-            int imported = 0;
-
-            for (int row = 2; row < rowCount; row++)
+            try
             {
-                var originalUrl = sheet.Cells[row, 1].Text?.Trim();
-                var title = sheet.Cells[row, 3].Text?.Trim();
-                var team = sheet.Cells[row, 4].Text?.Trim();
-                var level = sheet.Cells[row, 5].Text?.Trim();
+                ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+                using var package = new ExcelPackage(stream);
+                var sheet = package.Workbook.Worksheets.FirstOrDefault();
 
-                if (string.IsNullOrWhiteSpace(originalUrl)) continue;
-
-                var exists = await _context.ShortUrls.FirstOrDefaultAsync(x => x.OriginalUrl == originalUrl);
-                if (exists == null) continue;
-
-                string shortCode;
-                do
+                if (sheet == null)
                 {
-                    shortCode = Guid.NewGuid().ToString("N")[..8];
-                } while (await _context.ShortUrls.AnyAsync(x => x.ShortenedUrl.EndsWith($"/r/{shortCode}")));
+                    Console.WriteLine("⚠️ No worksheet found.");
+                    return 0;
+                }
 
-                var entity = new ShortUrl
+                int rowCount = sheet.Dimension.Rows;
+                Console.WriteLine($"📄 Sheet has {rowCount} rows.");
+                int imported = 0;
+
+                for (int row = 2; row <= rowCount; row++)
                 {
-                    OriginalUrl = originalUrl,
-                    Title = string.IsNullOrWhiteSpace(title) ? await GenerateTitleFromUrl(originalUrl) : title,
-                    Team = team,
-                    Level = level,
-                    ShortenedUrl = $"{_baseDomain.TrimEnd('/')}/r/{shortCode}",
-                    CreateDate = DateTime.UtcNow,
-                    UpdateDate = DateTime.UtcNow,
-                    IsDeleted = false
-                };
-                await _context.ShortUrls.AddAsync(entity);
-                imported++;
+                    var originalUrl = sheet.Cells[row, 1].Value?.ToString().Trim();
+                    Console.WriteLine($"🔍 Row {row} OriginalUrl: {originalUrl}");
+
+                    var shortenedUrl = sheet.Cells[row, 2].Value?.ToString().Trim();
+                    var title = sheet.Cells[row, 3].Value?.ToString().Trim();
+                    var team = sheet.Cells[row, 4].Value?.ToString().Trim();
+                    var level = sheet.Cells[row, 5].Value?.ToString().Trim();
+                    var createDateText = sheet.Cells[row, 6].Value?.ToString().Trim();
+                    var updateDateText = sheet.Cells[row, 7].Value?.ToString().Trim();
+                    var isDeletedText = sheet.Cells[row, 8].Value?.ToString().Trim();
+
+                    if (string.IsNullOrWhiteSpace(originalUrl)) continue;
+
+                    var createDate = DateTime.TryParse(createDateText, out var cd) ? cd : DateTime.UtcNow;
+                    var updateDate = DateTime.TryParse(updateDateText, out var ud) ? ud : DateTime.UtcNow;
+                    var isDeleted = bool.TryParse(isDeletedText, out var d) ? d : false;
+
+                    var existing = await _context.ShortUrls.FirstOrDefaultAsync(x => x.OriginalUrl == originalUrl);
+                    if (existing != null)
+                    {
+                        if (!string.IsNullOrWhiteSpace(shortenedUrl) && shortenedUrl != existing.ShortenedUrl)
+                        {
+                            Console.WriteLine($"⚠️ Skipped row {row}: Attempt to change ShortenedUrl.");
+                            continue;
+                        }
+
+                        existing.Title = string.IsNullOrWhiteSpace(title) ? existing.Title : title;
+                        existing.Team = team ?? existing.Team;
+                        existing.Level = level ?? existing.Level;
+                        existing.UpdateDate = DateTime.UtcNow;
+                    }
+                    else
+                    {
+                        if (string.IsNullOrWhiteSpace(shortenedUrl))
+                        {
+                            string shortCode;
+                            do
+                            {
+                                shortCode = Guid.NewGuid().ToString("N")[..8];
+                            } while (await _context.ShortUrls.AnyAsync(x => x.ShortenedUrl.EndsWith($"/r/{shortCode}")));
+
+                            shortenedUrl = $"{_baseDomain.TrimEnd('/')}/r/{shortCode}";
+                        }
+
+                        var entity = new ShortUrl
+                        {
+                            OriginalUrl = originalUrl,
+                            Title = string.IsNullOrWhiteSpace(title) ? await GenerateTitleFromUrl(originalUrl) : title,
+                            Team = team,
+                            Level = level,
+                            ShortenedUrl = shortenedUrl,
+                            CreateDate = createDate,
+                            UpdateDate = updateDate,
+                            IsDeleted = isDeleted
+                        };
+
+                        await _context.ShortUrls.AddAsync(entity);
+                    }
+
+                    imported++;
+                }
+
+                await _context.SaveChangesAsync();
+                Console.WriteLine($"✅ Finished import. Imported: {imported}");
+                return imported;
             }
-            await _context.SaveChangesAsync();
-            return imported;
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Import failed: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
+                return 0;
+            }
         }
+
     }
 }

@@ -135,16 +135,29 @@ namespace ShortLinkAPI.Controllers
             return File(stream, "appliacation/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "short_urls.xlxs");
         }
         // import api
-        [HttpGet("import")]
+        [HttpPost("import")]
         public async Task<IActionResult> ImportFromExcel(IFormFile file)
         {
             if (file == null || file.Length == 0)
+            {
+                Console.WriteLine("❌ File was empty or not received.");
                 return BadRequest("No file uploaded");
+            }
             using var stream = new MemoryStream();
             await file.CopyToAsync(stream);
             stream.Position = 0;
-            var result = await _service.ImportFromExcelAsync(stream);
-            return Ok(new {message = result});
+            try
+            {
+                var result = await _service.ImportFromExcelAsync(stream);
+                Console.WriteLine($"✅ Import completed: {result} records imported.");
+                return Ok(new { message = $"{result} records imported." });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Import failed: {ex.Message}");
+                return StatusCode(500, "Import failed.");
+            }
         }
+
     }
 }
