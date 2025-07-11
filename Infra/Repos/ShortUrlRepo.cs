@@ -3,21 +3,27 @@ using Application.IRepos.Generics;
 using Domain.Entities;
 using Infra.Repos.Generics;
 using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
+using Application.Settings;
 
 namespace Infra.Repos
 {
     public class ShortUrlRepo : GenericRepo<ShortUrl>, IShortUrlRepo
     {
         private readonly AppDbContext _context;
-        public ShortUrlRepo(AppDbContext context) : base(context)
+        private readonly string _baseDomain;
+        public ShortUrlRepo(AppDbContext context, IOptions<ShortUrlSettings> options) : base(context)
         {
             _context = context;
+            _baseDomain = options.Value.BaseDomain;
         }
         // Lấy originalURL để check duplicate
         public async Task<ShortUrl?> GetByOriginalUrlAsync(string originalUrl)
@@ -117,6 +123,108 @@ namespace Infra.Repos
             return await _context.ShortUrls
                 .AnyAsync(s => s.ShortenedUrl.EndsWith($"/r/{shortCode}") && !s.IsDeleted);
 
+        }
+        public async Task<string> GenerateTitleFromUrl(string url)
+        {
+            try
+            {
+                using var client = new HttpClient();
+                client.Timeout = TimeSpan.FromSeconds(3);
+                var html = await client.GetStringAsync(url);
+                var start = html.IndexOf("<title>", StringComparison.OrdinalIgnoreCase);
+                var end = html.IndexOf("</title>", StringComparison.OrdinalIgnoreCase);
+                if (start != -1 && end != -1 && end > start)
+                {
+                    return html.Substring(start + 7, end - (start + 7)).Trim();
+                }
+            }
+            catch { }
+
+            try
+            {
+                var uri = new Uri(url);
+                return uri.Host.Replace("www.", "").Split('.').FirstOrDefault() ?? "Untitled";
+            }
+            catch
+            {
+                return "Untitled";
+            }
+        }
+
+        public async Task<MemoryStream> ExportToExcelAsync()
+        {
+            var all = await _context.ShortUrls.AsNoTracking().ToListAsync();
+
+            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+            using var package = new ExcelPackage();
+            var sheet = package.Workbook.Worksheets.Add("ShortUrls");
+
+            var headers = new[] { "OriginalUrl", "ShortenedUrl", "Title", "Team", "Level", "CreateDate", "UpdateDate", "IsDeleted" };
+            for (int i = 0; i < headers.Length; i++)
+                sheet.Cells[1, i + 1].Value = headers[i];
+
+            for (int i = 0;i < all.Count; i++)
+            {
+                var url = all[i];
+                sheet.Cells[i + 1, 1].Value = url.OriginalUrl;
+                sheet.Cells[i + 1, 2].Value = url.ShortenedUrl;
+                sheet.Cells[i + 1, 3].Value = url.Title;
+                sheet.Cells[i + 1, 4].Value = url.Team;
+                sheet.Cells[i + 1, 5].Value = url.Level;
+                sheet.Cells[i + 1, 6].Value = url.CreateDate.ToString("yyyy-MM-dd HH:mm:ss");
+                sheet.Cells[i + 1, 7].Value = url.UpdateDate.ToString("yyyy-MM-dd HH:mm:ss");
+                sheet.Cells[i + 1, 8].Value = url.IsDeleted;
+            }
+            var stream = new MemoryStream();
+            package.SaveAs(stream);
+            stream.Position = 0;
+            return stream;
+        }
+
+        public async Task<int> ImportFromExcelAsync(Stream stream)
+        {
+            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+            using var package = new ExcelPackage();
+            var sheet = package.Workbook.Worksheets.FirstOrDefault();
+            if (sheet == null) return 0;
+
+            int rowCount = sheet.Dimension.Rows;
+            int imported = 0;
+
+            for (int row = 2; row < rowCount; row++)
+            {
+                var originalUrl = sheet.Cells[row, 1].Text?.Trim();
+                var title = sheet.Cells[row, 3].Text?.Trim();
+                var team = sheet.Cells[row, 4].Text?.Trim();
+                var level = sheet.Cells[row, 5].Text?.Trim();
+
+                if (string.IsNullOrWhiteSpace(originalUrl)) continue;
+
+                var exists = await _context.ShortUrls.FirstOrDefaultAsync(x => x.OriginalUrl == originalUrl);
+                if (exists == null) continue;
+
+                string shortCode;
+                do
+                {
+                    shortCode = Guid.NewGuid().ToString("N")[..8];
+                } while (await _context.ShortUrls.AnyAsync(x => x.ShortenedUrl.EndsWith($"/r/{shortCode}")));
+
+                var entity = new ShortUrl
+                {
+                    OriginalUrl = originalUrl,
+                    Title = string.IsNullOrWhiteSpace(title) ? await GenerateTitleFromUrl(originalUrl) : title,
+                    Team = team,
+                    Level = level,
+                    ShortenedUrl = $"{_baseDomain.TrimEnd('/')}/r/{shortCode}",
+                    CreateDate = DateTime.UtcNow,
+                    UpdateDate = DateTime.UtcNow,
+                    IsDeleted = false
+                };
+                await _context.ShortUrls.AddAsync(entity);
+                imported++;
+            }
+            await _context.SaveChangesAsync();
+            return imported;
         }
     }
 }

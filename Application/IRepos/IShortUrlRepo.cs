@@ -18,6 +18,9 @@ namespace Application.IRepos
         Task<Dictionary<string, Dictionary<string, int>>> GetStatsPerTeamAsync(DateTime? from = null);
         Task<ShortUrl?> SearchAsync(String query);
         Task<bool> ExistsByShortCodeAsync(string shortCode);
+        Task<string> GenerateTitleFromUrl(string url);
 
+        Task<MemoryStream> ExportToExcelAsync();
+        Task<int> ImportFromExcelAsync(Stream stream);
     }
 }

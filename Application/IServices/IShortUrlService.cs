@@ -22,5 +22,7 @@ namespace Application.IServices
         Task<Dictionary<string, Dictionary<string, int>>> GetTeamStats(DateTime? from = null);
         Task<ShortUrlVM?> SearchAsync(string query);
         Task<ShortUrlVM?> UpdateAsync(int id, string? title, string? team, string? level);
+        Task<MemoryStream> ExportToExcelAsync();
+        Task<int> ImportFromExcelAsync(Stream stream);
     }
 }

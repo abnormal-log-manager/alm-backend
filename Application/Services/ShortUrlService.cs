@@ -64,37 +64,8 @@ namespace Application.Services
         }
         private async Task<string> GenerateTitleFromUrl(string url)
         {
-            try
-            {
-                using var client = new HttpClient(); // tạo HttpClient để gửi request
-                client.Timeout = TimeSpan.FromSeconds(3);
-
-                var html = await client.GetStringAsync(url); // lấy nội dung HTML của trang
-                var start = html.IndexOf("<title>", StringComparison.OrdinalIgnoreCase); // vị trí của <title>
-                var end = html.IndexOf("</title>", StringComparison.OrdinalIgnoreCase); // vị trí của </title>
-                // nếu tìm thấy <title> </title>
-                if (start != -1 && end != -1 && end > start)
-                {
-                    var title = html.Substring(start + 7, end - (start + 7)).Trim(); // trích xuất phần giữa hai tags
-                    if (!string.IsNullOrWhiteSpace(title))
-                        return title;
-                }
-            }
-            catch
-            {
-                // swallow and fallback
-            }
-            try // tạo tiêu đề từ domain Url
-            {
-                var uri = new Uri(url);
-                return uri.Host.Replace("www.", "").Split('.').FirstOrDefault()?.CapitalizeFirst() ?? "Untitled Link";
-            }
-            catch 
-            {
-                return "Untitled Link";
-            }
+            return await _repo.GenerateTitleFromUrl(url);
         }
-
         public async Task<ShortUrlVM> ShortenUrlAsync(ShortUrlAddVM vm)
         {
             var existing = await _repo.GetByOriginalUrlAsync(vm.OriginalUrl);
@@ -174,6 +145,16 @@ namespace Application.Services
             entity.UpdateDate = DateTime.Now;
             await _unit.SaveChangesAsync();
             return _mapper.Map<ShortUrlVM>(entity);
+        }
+
+        public async Task<MemoryStream> ExportToExcelAsync()
+        {
+            return await _repo.ExportToExcelAsync();
+        }
+
+        public async Task<int> ImportFromExcelAsync(Stream stream)
+        {
+            return await _repo.ImportFromExcelAsync(stream);
         }
     }
 }

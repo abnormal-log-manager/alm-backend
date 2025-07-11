@@ -127,5 +127,24 @@ namespace ShortLinkAPI.Controllers
                 return NotFound("Hort URL not found or deleted.");
             return Ok(result);
         }
+        // export api
+        [HttpGet("export")]
+        public async Task<IActionResult> ExportToExcel()
+        {
+            var stream = await _service.ExportToExcelAsync();
+            return File(stream, "appliacation/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "short_urls.xlxs");
+        }
+        // import api
+        [HttpGet("import")]
+        public async Task<IActionResult> ImportFromExcel(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file uploaded");
+            using var stream = new MemoryStream();
+            await file.CopyToAsync(stream);
+            stream.Position = 0;
+            var result = await _service.ImportFromExcelAsync(stream);
+            return Ok(new {message = result});
+        }
     }
 }
