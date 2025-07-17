@@ -31,7 +31,7 @@
 - [Document chi tiết](#document-chi-tiết)
 
 ---
-# 📘 Shortlink API
+# Shortlink API
 
 # 📘 ShortURL Repository Documentation
 
