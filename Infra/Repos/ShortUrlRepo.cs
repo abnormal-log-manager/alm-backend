@@ -188,7 +188,7 @@ namespace Infra.Repos
             {
                 ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
                 using var package = new ExcelPackage(stream);
-                var sheet = package.Workbook.Worksheets.FirstOrDefault();
+                var sheet = package.Workbook.Worksheets.FirstOrDefault(); // đọc sheet đầu tiên trong file excel
 
                 if (sheet == null)
                 {
@@ -200,7 +200,7 @@ namespace Infra.Repos
                 Console.WriteLine($"📄 Sheet has {rowCount} rows.");
                 int imported = 0;
 
-                for (int row = 2; row <= rowCount; row++)
+                for (int row = 2; row <= rowCount; row++) // duyệt từng dòng từ dòng thứ 2
                 {
                     var originalUrl = sheet.Cells[row, 1].Value?.ToString().Trim();
                     Console.WriteLine($"🔍 Row {row} OriginalUrl: {originalUrl}");
@@ -220,20 +220,20 @@ namespace Infra.Repos
                     var isDeleted = bool.TryParse(isDeletedText, out var d) ? d : false;
 
                     var existing = await _context.ShortUrls.FirstOrDefaultAsync(x => x.OriginalUrl == originalUrl);
-                    if (existing != null)
+                    if (existing != null) // nếu dòng đã có OriginalUrl
                     {
-                        if (!string.IsNullOrWhiteSpace(shortenedUrl) && shortenedUrl != existing.ShortenedUrl)
+                        if (!string.IsNullOrWhiteSpace(shortenedUrl) && shortenedUrl != existing.ShortenedUrl) 
                         {
                             Console.WriteLine($"⚠️ Skipped row {row}: Attempt to change ShortenedUrl.");
-                            continue;
+                            continue; // bỏ qua nếu xung đột ShortenedUrl
                         }
-
+                        // cập nhật bản ghi nếu hợp lệ
                         existing.Title = string.IsNullOrWhiteSpace(title) ? existing.Title : title;
                         existing.Team = team ?? existing.Team;
                         existing.Level = level ?? existing.Level;
                         existing.UpdateDate = DateTime.UtcNow;
                     }
-                    else
+                    else // nếu là dòng mới
                     {
                         if (string.IsNullOrWhiteSpace(shortenedUrl))
                         {
@@ -242,10 +242,10 @@ namespace Infra.Repos
                             {
                                 shortCode = Guid.NewGuid().ToString("N")[..8];
                             } while (await _context.ShortUrls.AnyAsync(x => x.ShortenedUrl.EndsWith($"/r/{shortCode}")));
-
+                            // tạo ShortenedUrl
                             shortenedUrl = $"{_baseDomain.TrimEnd('/')}/r/{shortCode}";
                         }
-
+                        // tạo bản ghi mới vào db
                         var entity = new ShortUrl
                         {
                             OriginalUrl = originalUrl,

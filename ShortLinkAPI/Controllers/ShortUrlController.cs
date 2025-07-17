@@ -124,7 +124,7 @@ namespace ShortLinkAPI.Controllers
                 return BadRequest(ModelState);
             var result = await _service.UpdateAsync(id, vm.Title, vm.Team, vm.Level);
             if (result == null)
-                return NotFound("Hort URL not found or deleted.");
+                return NotFound("Host URL not found or deleted.");
             return Ok(result);
         }
         // export api
