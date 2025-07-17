@@ -1,6 +1,39 @@
-# Shortlink API
+# Shortlink API Backend Documentation
+## 📚 Mục lục
+- [Shortlink API](#-shortlink-api)
+  - [Tổng quan](#-tổng-quan)
+  - [1. API tạo Short URL](#1-api-tạo-short-url)
+  - [2. Bulk Create](#2-bulk-create)
+  - [3. Get All URLs (Paging)](#3-get-all-urls-paging)
+  - [4. Get URL by ID](#4-get-url-by-id)
+  - [5. Delete Permanently](#5-delete-permanently)
+  - [6. Soft Delete](#6-soft-delete)
+  - [7. Search URL](#7-search-url)
+  - [8. Filter URLs](#8-filter-urls)
+  - [9. Update Short URL](#9-update-short-url)
+  - [10. Export to Excel](#10-export-to-excel)
+  - [11. Import from Excel](#11-import-from-excel)
+  - [12. Redirect](#12-redirect)
+  - [13. Statistics per Team & Level](#13-statistics-per-team--level)
+- [Shortlink Repository](#shortlink-repository)
+  - [Tổng quan](#-tổng-quan-1)
+  - [1. Constructor](#1-constructor)
+  - [2. GetByOriginalUrlAsync](#2-getbyoriginalurlasync)
+  - [3. GetByShortCodeAsync](#3-getbyshortcodeasync)
+  - [4. GetPaginatedAsync](#4-getpaginatedasync)
+  - [5. GetFilteredAsync](#5-getfilteredasync)
+  - [6. GetStatsPerTeamAsync](#6-getstatsperteamasync)
+  - [7. SearchAsync](#7-searchasync)
+  - [8. ExistsByShortCodeAsync](#8-existsbyshortcodeasync)
+  - [9. GenerateTitleFromUrl](#9-generatetitlefromurl)
+  - [10. ExportToExcelAsync](#10-exporttoexcelasync)
+  - [11. ImportFromExcelAsync](#11-importfromexcelasync)
+- [Document chi tiết](#document-chi-tiết)
 
-# 📘 ShortURL API Documentation
+---
+# 📘 Shortlink API
+
+# 📘 ShortURL Repository Documentation
 
 ---
 
